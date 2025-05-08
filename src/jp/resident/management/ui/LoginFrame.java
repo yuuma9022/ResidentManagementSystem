@@ -80,8 +80,8 @@ public class LoginFrame extends JFrame {
     
     //入力内容チェック
     private boolean validateInput(String user, String pass) {
-    if (user.length() > 10) {
-        errorLabel.setText("ユーザー名は10文字以内で入力してください");
+    if (user.length() > 15) {
+        errorLabel.setText("ユーザー名は15文字以内で入力してください");
         usernameField.requestFocusInWindow();
         return false;
     }
@@ -102,34 +102,23 @@ public class LoginFrame extends JFrame {
         String inputUser = usernameField.getText();
         String inputPass = new String(passwordField.getPassword());
 
-        // アプリからMySQLに接続するための「固定のDB接続ユーザー」
-        String dbUser = "root";
-        String dbPass = "Ts82758275";
-        String url = "jdbc:mysql://localhost:3306/test?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true";
+        new jp.resident.management.lib.dblogin();
+        boolean success = false;
+		try {
+			success = jp.resident.management.lib.dblogin.authenticate(inputUser, inputPass);
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 
-        try (Connection conn = DriverManager.getConnection(url, dbUser, dbPass)) {
-            // 入力値を employers テーブルの中身と照合
-            String sql = "SELECT * FROM employers WHERE user = ? AND password = ?";
-            try (PreparedStatement stmt = conn.prepareStatement(sql)) {
-                stmt.setString(1, inputUser);//1つ目の？にユーザー変数挿入
-                stmt.setString(2, inputPass);//1つ目の？にパスワード変数挿入
-
-                //クエリ実行
-                ResultSet rs = stmt.executeQuery();
-                if (rs.next()) {
-                    dispose();
-                    new MainMenuFrame(); // メニュー画面へ遷移
-                } else {
-                	// attemptLogin() 内（失敗時）
-                	errorLabel.setText("ユーザー名またはパスワードが違います");
-                	usernameField.requestFocusInWindow();
-                	userLabel.setForeground(Color.RED);
-                	passLabel.setForeground(Color.RED);
-                }
-            }
-        } catch (SQLException e) {
-            JOptionPane.showMessageDialog(this, "❌ データベース接続失敗：" + e.getMessage(), "エラー", JOptionPane.ERROR_MESSAGE);
+        if (success) {
+            dispose();
+            new MainMenuFrame();
+        } else {
+            errorLabel.setText("ユーザー名またはパスワードが違います");
+            usernameField.requestFocusInWindow();
+            userLabel.setForeground(Color.RED);
+            passLabel.setForeground(Color.RED);
         }
     }
-
 }
